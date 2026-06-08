@@ -1,0 +1,22 @@
+# виртуальное окружение
+venv/
+.env/
+
+# Python кеш
+__pycache__/
+*.pyc
+
+# база данных
+*.db
+database/shop.db
+
+# логи
+*.log
+data/*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
