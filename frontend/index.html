@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>Notes App</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+    font-family: Arial;
+    margin: 0;
+    background: linear-gradient(120deg, #dfe9f3, #ffffff);
+}
+
+.bg {
+    min-height: 100vh;
+    padding: 30px;
+}
+
+.container {
+    max-width: 650px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.header img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    outline: none;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.add {
+    background: #2ecc71;
+    color: white;
+    margin-top: 10px;
+}
+
+.note {
+    background: #f7f7f7;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 10px;
+}
+
+.actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.edit {
+    background: #3498db;
+    color: white;
+}
+
+.delete {
+    background: #e74c3c;
+    color: white;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background: white;
+    width: 400px;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="bg">
+
+<div class="container">
+
+<div class="header">
+    <img src="https://images.unsplash.com/photo-1506784365847-bbad939e9335">
+    <h2><i class="fa-solid fa-note-sticky"></i> Notes App</h2>
+</div>
+
+<!-- CREATE (ВАШ СТИЛЬ, ТОЛЬКО ID ИСПРАВЛЕНЫ) -->
+<input id="createTitle" placeholder="Title">
+<textarea id="createContent" placeholder="Write your note..."></textarea>
+
+<button class="add" onclick="createNote()">
+    <i class="fa fa-plus"></i> Add (Enter)
+</button>
+
+<div id="list"></div>
+
+</div>
+
+</div>
+
+<!-- MODAL (СТИЛЬ ТОТ ЖЕ) -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+
+        <h3>Edit Note</h3>
+
+        <input id="editTitle" placeholder="Title">
+        <textarea id="editContent" placeholder="Write your note..."></textarea>
+
+        <button onclick="saveEdit()">Save</button>
+        <button onclick="closeModal()">Cancel</button>
+
+    </div>
+</div>
+
+<script>
+
+const API = "http://127.0.0.1:8000/notes";
+
+let editId = null;
+
+/* ENTER */
+document.getElementById("createContent").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        createNote();
+    }
+});
+
+/* GET */
+async function getNotes() {
+    const res = await fetch(API);
+    const data = await res.json();
+
+    let html = "";
+
+    data.forEach(n => {
+        html += `
+        <div class="note">
+            <b>${n.title}</b>
+            <p>${n.content}</p>
+
+            <div class="actions">
+
+                <button class="edit"
+                    onclick='openEdit(${n.id}, ${JSON.stringify(n.title)}, ${JSON.stringify(n.content)})'>
+                    Edit
+                </button>
+
+                <button class="delete"
+                    onclick="deleteNote(${n.id})">
+                    Delete
+                </button>
+
+            </div>
+        </div>
+        `;
+    });
+
+    document.getElementById("list").innerHTML = html;
+}
+
+/* CREATE */
+async function createNote() {
+    const title = document.getElementById("createTitle").value;
+    const content = document.getElementById("createContent").value;
+
+    if (!title.trim() || !content.trim()) return;
+
+    await fetch(API, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({title, content})
+    });
+
+    document.getElementById("createTitle").value = "";
+    document.getElementById("createContent").value = "";
+
+    getNotes();
+}
+
+/* DELETE */
+async function deleteNote(id) {
+    await fetch(`${API}/${id}`, { method: "DELETE" });
+    getNotes();
+}
+
+/* OPEN EDIT */
+function openEdit(id, title, content) {
+    editId = id;
+
+    document.getElementById("editTitle").value = title;
+    document.getElementById("editContent").value = content;
+
+    document.getElementById("modal").style.display = "block";
+}
+
+/* SAVE EDIT */
+async function saveEdit() {
+    const title = document.getElementById("editTitle").value;
+    const content = document.getElementById("editContent").value;
+
+    await fetch(`${API}/${editId}`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({title, content})
+    });
+
+    closeModal();
+    getNotes();
+}
+
+/* CLOSE */
+function closeModal() {
+    document.getElementById("modal").style.display = "none";
+}
+
+getNotes();
+
+</script>
+
+</body>
+</html>
