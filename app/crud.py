@@ -21,6 +21,19 @@ def read_note(db: Session):
     return db.query(Note).all()
 
 
+def get_note(db: Session, skip=0, limit=0):
+    
+    return(
+        db.query(Note).offset(skip).limit(limit).all()
+    )
+
+
+def search_note(db: Session, search):
+    
+    return (db.query(Note).filter(Note.title.ilike(f"%{search}%")).all())
+    
+    
+
 def update_note(db: Session, note_id: int, title: str, content: str):
     
     note = db.query(Note).filter(Note.id == note_id).first()
